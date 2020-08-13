@@ -1,0 +1,49 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block body %}
+    {% if user.is_authenticated %}
+        <h2>{{ user.username }}</h2>
+        <div id="posts">
+            {% for post in posts %}
+                <div class='row border mx-auto p-3' id="post">
+                    <div class="col-sm-12">
+                        <h6><a href="{% url 'profile' post.user.id %}">{{ post.user }}</a></h6>
+                        <p>{{ post.text }}</p>
+                        <p id="time">{{ post.time }}</p>
+                        <p>
+                            {% if request.user in post.likes.users.all %}
+                                <a href="">
+                                    <i class="fas fa-heart fa-lg" name="heart" id="{{ post.id }}" style="color:red;"></i>
+                                </a>
+                            {% else %}
+                                <a href="">
+                                    <i class="fas fa-heart fa-lg" name="heart" id="{{ post.id }}" style="color:gray;"></i>
+                                </a>
+                            {% endif %}
+                            <span class="num-like" id="{{ post.id }}">{{ post.likes.num }}</span>
+                        </p>
+                        <ul id="comments">
+                            {% for c in post.comments.all %}
+                                <li>{{ c.user }}: {{ c.comment }}</li>
+                            {% endfor %}
+                        </ul>
+                        <a href="" class="comment" id="{{ post.id }}"><i class="fas fa-comment-dots fa-lg" style="color:rgb(87, 87, 255);"></i> Comment</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class='row border mx-auto p-3' id='comment'>
+            <form>
+                {% csrf_token %}
+                {{ comment_form }}
+                <input type="submit" class="btn btn-primary" name="comment-submit" id="comment-submit"/>
+            </form>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'network/following.js' %}"></script>
+{% endblock %}

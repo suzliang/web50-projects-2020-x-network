@@ -1,0 +1,69 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block body %}
+    <h2>All Posts</h2>
+
+    <div class='row border mx-auto p-3' id="new_post">
+        <h4>New Post</h4>
+        <form action="{% url 'index' %}" method="POST" class="form-group">
+            {% csrf_token %}
+            {{ post_form.text }}
+            <input type="submit" class="btn btn-primary" name="post-submit" id="post-submit">
+        </form>
+    </div>
+
+    <div id="posts">
+        {% for post in posts %}
+            <div class='row border mx-auto p-3' id="post">
+                <div class="col-sm-12">
+                    <h6><a href="{% url 'profile' post.user.id %}">{{ post.user }}</a></h6>
+                    {% if request.user == post.user %}
+                        <a href="" class="edit" id="{{ post.id }}">Edit</a>
+                    {% endif %}
+                    <p>{{ post.text }}</p>
+                    <p id="time">{{ post.time }}</p>
+                    <p>
+                        {% if request.user in post.likes.users.all %}
+                            <a href="">
+                                <i class="fas fa-heart fa-lg" name="heart" id="{{ post.id }}" style="color:red;"></i>
+                            </a>
+                        {% else %}
+                            <a href="">
+                                <i class="fas fa-heart fa-lg" name="heart" id="{{ post.id }}" style="color:gray;"></i>
+                            </a>
+                        {% endif %}
+                        <span class="num-like" id="{{ post.id }}">{{ post.likes.num }}</span>
+                    </p>
+                    <ul id="comments">
+                        {% for c in post.comments.all %}
+                            <li>{{ c.user }}: {{ c.comment }}</li>
+                        {% endfor %}
+                    </ul>
+                    <a href="" class="comment" id="{{ post.id }}"><i class="fas fa-comment-dots fa-lg" style="color:rgb(87, 87, 255);"></i> Comment</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class='row border mx-auto p-3' id='edit'>
+        <h4 id="user">{{ request.user }}</h4>
+        <form>
+            {% csrf_token %}
+            {{ post_form.text }}
+            <input type="submit" class="btn btn-primary" name="edit-submit" id="edit-submit"/>
+        </form>
+    </div>
+
+    <div class='row border mx-auto p-3' id='comment'>
+        <form>
+            {% csrf_token %}
+            {{ comment_form }}
+            <input type="submit" class="btn btn-primary" name="comment-submit" id="comment-submit"/>
+        </form>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'network/index.js' %}"></script>
+{% endblock %}
