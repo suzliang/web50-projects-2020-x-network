@@ -77,11 +77,13 @@ function update_likes(post_id) {
     if (h === 'rgb(128, 128, 128)') {
         n++;
         $('span[class="num-like"]' + '[id=' + CSS.escape(post_id) + ']').html(n);
+        $('i[name="heart"]' + '[id=' + CSS.escape(post_id) + ']').css('color', 'red');
     }
     // -1
     if (h === 'rgb(255, 0, 0)') {
         n--;
         $('span[class="num-like"]' + '[id=' + CSS.escape(post_id) + ']').html(n);
+        $('i[name="heart"]' + '[id=' + CSS.escape(post_id) + ']').css('color', 'gray');
     }
 
     // PUT

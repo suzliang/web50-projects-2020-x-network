@@ -21,7 +21,7 @@
                     {% if request.user == post.user %}
                         <a href="" class="edit" id="{{ post.id }}">Edit</a>
                     {% endif %}
-                    <p>{{ post.text }}</p>
+                    <p class="pt" id="{{ post.id }}">{{ post.text }}</p>
                     <p id="time">{{ post.time }}</p>
                     <p>
                         {% if request.user in post.likes.users.all %}

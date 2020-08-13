@@ -1,6 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
     // By default, load all
     load_all();
+    $('p[class="pt"][id=15]').on('click', function() {
+        alert('clicked');
+        this.innerHTML = 'edited';
+    });
     // Edit click
     const edits = document.querySelectorAll(".edit")
     edits.forEach(
@@ -96,6 +100,7 @@ function send_edit(post_id) {
     })
     .then(response => response.json())
     console.log('Edit submitted');
+    $('p[class="pt"]'+'[id=' + CSS.escape(post_id) + ']').html(ft);
     load_all();
 }
 
@@ -147,11 +152,13 @@ function update_likes(post_id) {
     if (h === 'rgb(128, 128, 128)') {
         n++;
         $('span[class="num-like"]' + '[id=' + CSS.escape(post_id) + ']').html(n);
+        $('i[name="heart"]' + '[id=' + CSS.escape(post_id) + ']').css('color', 'red');
     }
     // -1
     if (h === 'rgb(255, 0, 0)') {
         n--;
         $('span[class="num-like"]' + '[id=' + CSS.escape(post_id) + ']').html(n);
+        $('i[name="heart"]' + '[id=' + CSS.escape(post_id) + ']').css('color', 'gray');
     }
 
     // PUT
