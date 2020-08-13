@@ -5,6 +5,7 @@ from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect, Http404, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from .models import *
 
@@ -13,10 +14,20 @@ def index(request):
     if request.user.is_authenticated:
         # GET
         if request.method == 'GET':
-            posts = Post.objects.all().order_by('-time')
+            all_posts = Post.objects.all().order_by('-time')
+            page = request.GET.get('page', 1)
+            paginator = Paginator(all_posts, 10)
+            try:
+                posts = paginator.page(page)
+            except PageNotAnInteger:
+                posts = paginator.page(1)
+            except EmptyPage:
+                posts = paginator.page(paginator.num_pages)
+            
             post_form = PostForm(initial={'user': request.user})
             comment_form = CommentForm(initial={'user': request.user})
             return render(request, "network/index.html", {'posts': posts, 'post_form': post_form, 'comment_form': comment_form})
+        
         # POST
         if request.method == 'POST':
             # Create form with request data
@@ -87,21 +98,37 @@ def following(request):
     # GET
     if request.method == 'GET':
         uf = Following.objects.filter(user=request.user).values_list('following', flat=True)
-        ps = Post.objects.filter(user__id__in=uf)
+        all_posts = Post.objects.filter(user__id__in=uf).order_by('-time')
+        page = request.GET.get('page', 1)
+        paginator = Paginator(all_posts, 10)
+        try:
+            posts = paginator.page(page)
+        except PageNotAnInteger:
+            posts = paginator.page(1)
+        except EmptyPage:
+            posts = paginator.page(paginator.num_pages)
 
         comment_form = CommentForm(initial={'user': request.user})
-        return render(request, 'network/following.html', {'posts': ps, 'comment_form': comment_form})
+        return render(request, 'network/following.html', {'posts': posts, 'comment_form': comment_form})
     
     # POST
     f = Following.objects.get(user=request.user)
     if request.method == 'POST':
+        pu = User.objects.get(username=request.POST['pu'])
+        try: 
+            pf = Following.objects.get(user=pu)
+        except Following.DoesNotExist:
+            npf = Following(user=pu)
+            npf.save()
+        pf = Following.objects.get(user=pu)
+        
         if 'follow' in request.POST:
-            # request.POST.get('pu','')
-            fu = User.objects.get(username=request.POST['pu'])
-            f.following.add(fu)
+            f.following.add(pu)
+            pf.followers.add(request.user)
         if 'unfollow' in request.POST:
-            ufu = User.objects.get(username=request.POST['pu'])
-            f.following.remove(ufu)
+            f.following.remove(pu)
+            pf.followers.remove(request.user)
+        
         return HttpResponseRedirect(reverse('following'))
 
 def profile(request, user_id):
@@ -109,9 +136,25 @@ def profile(request, user_id):
         pu = User.objects.get(id=user_id)
     except User.DoesNotExist:
         raise Http404("User does not exist")
+
+    # Get post user's follow data
+    try: 
+        pf = Following.objects.get(user=pu)
+    except Following.DoesNotExist:
+        npf = Following(user=pu)
+        npf.save()
+    pf = Following.objects.get(user=pu)
     
-    # Get post users' posts
-    ps = Post.objects.filter(user=pu).order_by('-time')
+    # Get post user's posts
+    all_posts = Post.objects.filter(user=pu).order_by('-time')
+    page = request.GET.get('page', 1)
+    paginator = Paginator(all_posts, 10)
+    try:
+        posts = paginator.page(page)
+    except PageNotAnInteger:
+        posts = paginator.page(1)
+    except EmptyPage:
+        posts = paginator.page(paginator.num_pages)
     
     if request.user.is_authenticated:
         # Get user's follow data
@@ -126,9 +169,9 @@ def profile(request, user_id):
         post_form = PostForm(initial={'user': request.user})
         comment_form = CommentForm(initial={'user': request.user})
 
-        return render(request, "network/profile.html", {'pu': pu, 'posts': ps, 'us': us, 'post_form': post_form, 'comment_form': comment_form})
+        return render(request, "network/profile.html", {'pu': pu, 'pf': pf, 'posts': posts, 'us': us, 'post_form': post_form, 'comment_form': comment_form})
     # Return profile for unauthenticated users
-    return render(request, "network/profile.html", {'pu': pu, 'posts': ps})
+    return render(request, "network/profile.html", {'pu': pu, 'pf': pf, 'posts': posts})
 
 def login_view(request):
     if request.method == "POST":
